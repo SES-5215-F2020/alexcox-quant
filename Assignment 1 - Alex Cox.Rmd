@@ -1,0 +1,52 @@
+---
+title: "Assignment 1 - Alex Cox"
+author: "Alex Cox"
+date: "9/9/2020"
+output: html_document
+---
+
+```{r load libraries, results = 'hide'}
+library(tidycensus)
+library(tidyverse)
+```
+
+
+## Overview
+
+In assembling my dataset for this analysis, I decided to synthesize my interest in personal commute patterns with my background growing up in a military family in Virginia. Military commute patterns do not follow typical American patterns, in part due to factors such as odd hours and the fact that many servicemembers live very close to their jobs on base. In examining Virginia, I expect to see high percentages of walking/biking among military commuters due to the presence of numerous bases in areas such as Norfolk, where I was born; as well as high percentages of bus/rail ridership due to the transit-accessible nature of defense jobs in Arlington, where I was raised.
+
+In order to conduct an analysis of commute patterns for military servicemembers, I considered the following 5 variables from the 2018 ACS:
+
+1. Military Service - MIL (categorical)
+2. Means of Transportation to Work - JWTR (categorical)
+3. Income - PINCP (continuous)
+4. Age - AGEP (continuous)
+5. Travel time to work - JWMNP (continuous)
+
+The military service variable contains several indicators ranging from "N/A (less than 17 years old)" to "Now on active duty." The means of transportation and travel time to work will allow me to compare commute times across different modes, while I intend for the age and income variables to provide an approximation of rank. To create the dataframe, I ran the following code (making sure to filter so that travel time to work was greater than "0"):
+
+``` {r load person-level data, results = 'hide'}
+person_data <- get_pums(variables = c("MIL",
+                                      "JWTR",
+                                      "PINCP",
+                                      "AGEP",
+                                      "JWMNP"),
+                        state = "VA", 
+                        year = 2018, 
+                        survey = "acs1",
+                        recode = TRUE) %>%
+  filter(JWMNP > 0) %>%
+  select(MIL_label, JWTR_label, PINCP, AGEP, JWMNP)
+```
+
+The dataframe that resulted from running this code displays 38,315 observations for these 5 variables. The vast majority of these results are labeled "Never served in the military," so I considered filtering these out in order to focus solely on military-affiliated commuters. However, Carole gave me feedback that it may be interesting to compare patterns between military and non-military commuters, so I decided not to filter out non-military commuters for the timebeing. 
+
+``` {r show person-level data}
+person_data
+```
+
+My last step was to save this dataframe as a CSV file for future use.
+
+``` {r save dataframes as csv}
+write_csv(person_data, "militarycommute.csv")
+```
