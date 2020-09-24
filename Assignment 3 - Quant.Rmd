@@ -1,0 +1,385 @@
+---
+title: "Assignment 3 - Quant"
+author: "Alex Cox"
+date: "9/21/2020"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 3 Overview
+
+For this assignment, I will examine the relationships between my 5 variables from the 2018 ACS survey in Virginia. As a reminder, those variables are:
+
+1. Military Service - MIL (categorical)
+2. Means of Transportation to Work - JWTR (categorical)
+3. Income - PINCP (continuous)
+4. Age - AGEP (continuous)
+5. Travel time to work - JWMNP (continuous)
+
+On Sara's advice from last week, I simplified my dataset by filtering out individuals whose military service label was "N/A (Less than 17 years old)" or "Never served in the military." Eliminating non-military personnel from the analysis has reduced the number of observations in my dataset from 38,815 to 5,045.
+
+By my calculation, there are 10 relationships to examine between my variables (side note: my two categorical variables both have three or more levels). 1 relationship is between two categorical variables, 3 relationships are between two continuous variables, and 6 relationships are between one categorical variable and one continuous variable:
+
+1. Military Service - Means of Transportation to Work (Categorical - Categorical)
+2. Income - Age (Continuous - Continuous)
+3. Income - Travel time to work (Continuous - Continuous)
+4. Age - Travel time to work (Continuous - Continuous)
+5. Military Service - Income (Categorical - Continuous)
+6. Military Service - Age (Categorical - Continuous)
+7. Military Service - Travel time to work (Categorical - Continuous)
+8. Means of Transportation to Work - Income (Categorical - Continuous)
+9. Means of Transportation to Work - Age (Categorical - Continuous)
+10. Means of Transportation to Work - Travel time to work (Categorical - Continuous)
+
+I should also note that Julia showed me how to add a feature to toggle code chunk visibility in my HTML document, which I've used for the first time on this assignment. Thanks, Julia!
+
+```{r load libraries, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r load CSV, message=FALSE}
+military_data <- read_csv("militarycommute.csv")
+```
+
+## Comparisons Part I: Relationship between two categorical variables
+
+1. Military Service - Means of Transportation to Work (Categorical - Categorical)
+
+In running a comparison between my categorical variables, I did not seem to find a statistically significant correlation between military service status and travel mode to work, except perhaps for a larger-than-expected number of walking commuters in the military. I accomplished this by running a Chi-square test for military service and each mode of commuting given in the ACS.
+
+```{r MIL-JWTR comparison 1, message=FALSE}
+options(scipen=999) 
+chi_sqCAR <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Car, truck, or van") 
+chi_sqCAR
+chi_sqCAR$observed
+chi_sqCAR$expected
+```
+
+
+
+```{r MIL-JWTR comparison 2, message=FALSE}
+options(scipen=999) 
+chi_sqWALK <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Walked") 
+chi_sqWALK
+chi_sqWALK$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 3, message=FALSE}
+options(scipen=999) 
+chi_sqOTHER <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Other method") 
+chi_sqOTHER
+chi_sqOTHER$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 4, message=FALSE}
+chi_sqBIKE <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Bicycle") 
+chi_sqBIKE
+chi_sqBIKE$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 5, message=FALSE}
+chi_sqBUS <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Bus or trolley bus") 
+chi_sqBUS
+chi_sqBUS$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 6, message=FALSE}
+chi_sqSUBWAY <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Subway or elevated") 
+chi_sqSUBWAY
+chi_sqSUBWAY$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 7, message=FALSE}
+chi_sqMOTORCYCLE <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Motorcycle") 
+chi_sqMOTORCYCLE
+chi_sqMOTORCYCLE$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 8, message=FALSE}
+chi_sqTAXI <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Taxicab") 
+chi_sqTAXI
+chi_sqTAXI$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 9, message=FALSE}
+chi_sqRAIL <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Railroad") 
+chi_sqRAIL
+chi_sqRAIL$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 10, message=FALSE}
+chi_sqFERRY <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Ferryboat") 
+chi_sqFERRY
+chi_sqFERRY$observed
+chi_sqWALK$expected
+```
+
+
+
+```{r MIL-JWTR comparison 11, message=FALSE}
+chi_sqTROLLEY <- chisq.test(military_data$MIL_label, military_data$JWTR_label == 
+                       "Streetcar or trolley car (carro publico in Puerto Rico)") 
+chi_sqTROLLEY
+chi_sqTROLLEY$observed
+chi_sqWALK$expected
+```
+
+
+
+## Comparisons Part II: Relationship between two continuous variables
+
+2. Income - Age (Continuous - Continuous)
+
+I would say there's a clear correlation between age and income among current and former service members, which isn't a big surprise. The number of high-income outliers does make the chart a bit difficult to read. I'm also curious why there is such a clear line of datapoints at the $500,000 mark.
+
+```{r income-age comparison, message=FALSE}
+correlation <- cor.test(military_data$AGEP, military_data$PINCP)
+
+correlation
+
+ggplot(military_data, aes(x = AGEP, y = PINCP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Age of Servicemember (Years)") +
+  scale_y_continuous(name = "Income", 
+                     breaks = seq(0, 1000000, by = 50000),
+                     labels = scales::dollar_format())
+```
+
+3. Income - Travel time to work (Continuous - Continuous)
+
+There seems to be an interesting correlation of commute times tending to increase along with income. However, I think the outliers at the high ends of both variables are making it difficult to see the trend for the majority of people.
+
+```{r income-travel time comparison, message=FALSE}
+correlation <- cor.test(military_data$JWMNP, military_data$PINCP)
+
+correlation
+
+ggplot(military_data, aes(x = JWMNP, y = PINCP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Travel Time to Work",
+                     breaks = seq(0, 150, by = 10)) +
+  scale_y_continuous(name = "Income", 
+                     breaks = seq(0, 1000000, by = 50000),
+                     labels = scales::dollar_format())
+  
+```
+
+
+4. Age - Travel time to work (Continuous - Continuous)
+
+There seems to be a correlation between age and travel time to work, as younger and older personnel have generally shorter commute times than those in middle age according to the trend line (also affected by several outliers with 150-minute commutes around this age).
+
+```{r age-travel time, message=FALSE}
+correlation <- cor.test(military_data$AGEP, military_data$JWMNP)
+
+correlation
+
+ggplot(military_data, aes(x = AGEP, y = JWMNP)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Age of Servicemember (Years)") +
+  scale_y_continuous(name = "Travel Time to Work",
+                     breaks = seq(0, 150, by = 10))
+```
+
+## Comparisons Part III: Relationship between a continuous variable and a categorical variable (three or more levels)
+
+5. Military Service - Income (Categorical - Continuous)
+
+There appears to be a strong correlation between income and military service status, with those who were on active duty in the past but not now tending to have significantly higher income.
+
+```{r MIL-PINCP, message=FALSE}
+anova <- aov(PINCP ~ MIL_label, data = military_data)
+options(scipen=999) 
+summary(anova)
+
+ggplot(military_data, aes(x = MIL_label, y = PINCP)) +
+  geom_violin() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(name = "Miltary Service Status",
+                     labels = c("On Active Duty",
+                                "Retired",
+                                "Reserves Only")) +
+  scale_y_continuous(name = "Income", 
+                     labels = scales::dollar_format())
+```
+
+
+6. Military Service - Age (Categorical - Continuous)
+
+There is also a strong correlation between military service status and age, as those on active duty tend to be younger than those retired (not exactly a surprising finding).
+
+```{r MIL-AGEP, message=FALSE}
+anova <- aov(AGEP ~ MIL_label, data = military_data)
+options(scipen=999) 
+summary(anova)
+
+ggplot(military_data, aes(x = MIL_label, y = AGEP)) +
+  geom_violin() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(name = "Miltary Service Status",
+                     labels = c("On Active Duty",
+                                "Retired",
+                                "Reserves Only")) +
+  scale_y_continuous(name = "Age", 
+                     breaks = seq(0, 100, by = 10))
+```
+
+7. Military Service - Travel time to work (Categorical - Continuous)
+
+The very small p-value indicates a strong correlation between military service and travel time to work, although in looking at the violin plot the numbers seem to be somewhat evenly distributed across different statuses.
+
+```{r MIL-JWMNP, message=FALSE}
+anova <- aov(JWMNP ~ MIL_label, data = military_data)
+options(scipen=999) 
+summary(anova)
+
+ggplot(military_data, aes(x = MIL_label, y = JWMNP)) +
+  geom_violin() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(name = "Miltary Service Status",
+                     labels = c("On Active Duty",
+                                "Retired",
+                                "Reserves Only")) +
+  scale_y_continuous(name = "Travel Time to Work", 
+                     breaks = seq(0, 150, by = 10))
+```
+
+8. Means of Transportation to Work - Income (Categorical - Continuous)
+
+A very strong correlation between means of transportation to work and income, which is not surprising. However, I'm intrigued by the spread amongst modes such as walking. I switched to boxplots for these analyses because I think the 11 variables for "Means of Transportation to Work" makes violin plots too small and skinny to read.
+
+```{r JWTR-PINCP, message=FALSE}
+anova <- aov(PINCP ~ JWTR_label, data = military_data)
+options(scipen=999) 
+summary(anova)
+
+ggplot(military_data, aes(x = JWTR_label, y = PINCP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(name = "Travel Mode to Work",
+                     labels = c("Bicycle",
+                                "Bus/Trolley Bus",
+                                "Car, Truck, or Van",
+                                "Ferryboat",
+                                "Motorcycle",
+                                "Other Method",
+                                "Railroad",
+                                "Streetcar/Trolley",
+                                "Subway/Elevated",
+                                "Taxicab",
+                                "Walked")) +
+  scale_y_continuous(name = "Income", 
+                     labels = scales::dollar_format())
+```
+
+9. Means of Transportation to Work - Age (Categorical - Continuous)
+
+The difference between active transportation modes was interesting to me here - the median age for walking to work is much lower than biking, which falls between 40-55 along with most other modes. However, this may be skewed because so many active duty members walk to work, and we saw from the age-military service comparison that they skewed younger.
+
+```{r JWTR-AGEP, message=FALSE}
+anova <- aov(AGEP ~ JWTR_label, data = military_data)
+options(scipen=999) 
+summary(anova)
+
+ggplot(military_data, aes(x = JWTR_label, y = AGEP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(name = "Travel Mode to Work",
+                     labels = c("Bicycle",
+                                "Bus/Trolley Bus",
+                                "Car, Truck, or Van",
+                                "Ferryboat",
+                                "Motorcycle",
+                                "Other Method",
+                                "Railroad",
+                                "Streetcar/Trolley",
+                                "Subway/Elevated",
+                                "Taxicab",
+                                "Walked")) +
+  scale_y_continuous(name = "Age", 
+                     breaks = seq(0, 100, by = 10))
+```
+
+10. Means of Transportation to Work - Travel time to work (Categorical - Continuous)
+
+Aha! Here's a comparison that is always fascinating to look into. Clearly there is a strong correlation between commute mode and commute time. It seems like car/truck/van/motorcycle users consistently report shorter commute times, but I was pleased to see that walking still provided a very short commute for those who live close to work. The ferryboat and streetcar commute times seem unusually high, but those were reported by a very small number of commuters overall.
+
+```{r JWTR-JWMNP, message=FALSE}
+anova <- aov(JWMNP ~ JWTR_label, data = military_data)
+options(scipen=999) 
+summary(anova)
+
+ggplot(military_data, aes(x = JWTR_label, y = JWMNP)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(name = "Travel Mode to Work",
+                     labels = c("Bicycle",
+                                "Bus/Trolley Bus",
+                                "Car, Truck, or Van",
+                                "Ferryboat",
+                                "Motorcycle",
+                                "Other Method",
+                                "Railroad",
+                                "Streetcar/Trolley",
+                                "Subway/Elevated",
+                                "Taxicab",
+                                "Walked")) +
+  scale_y_continuous(name = "Travel Time to Work", 
+                     breaks = seq(0, 150, by = 10))
+```
+
