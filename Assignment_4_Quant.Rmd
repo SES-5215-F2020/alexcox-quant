@@ -1,0 +1,61 @@
+---
+title: "Assignment_4_Quant"
+author: "Alex Cox"
+date: "9/24/2020"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library, include=FALSE}
+library(tidyverse)
+```
+
+## Overview
+
+For this analysis, I created a linear regression predicting average travel time to work (JWMNP) based on the mode of commute (JWTR_label), military service status (MIL_Label), income (PINCP), and age (AGEP) based on 2018 ACS responses in the state of Virginia. I mutated my JWTR_label variables to simplify them, as well as to number them so that the model would compare other modes against "Walking," which I was interested to examine.
+
+## Loading Data and Running the Model
+
+```{r load CSV, message=FALSE}
+military_data <- read_csv("militarycommute.csv") %>%
+  mutate(JWTR_label = case_when(
+    JWTR_label=="Walked" ~ "1_Walking",
+    JWTR_label=="Car, truck, or van" ~ "2_Automobile",
+    JWTR_label=="Bus or trolley bus" ~ "3_Bus",
+    JWTR_label=="Streetcar or trolley car (carro publico in Puerto Rico)" ~ "4_Trolley",
+    JWTR_label=="Bicycle" ~ "5_Bicycle",
+    JWTR_label=="Subway or elevated" ~ "6_Subway",
+    JWTR_label=="Railroad" ~ "7_Railroad",
+    JWTR_label=="Ferryboat" ~ "8_Ferry",
+    JWTR_label=="Taxicab" ~ "9_Taxi",
+    JWTR_label=="Motorcycle" ~ "10_Motorcycle",
+    JWTR_label=="Other method" ~ "11_Other"))
+```
+
+```{r model, message=FALSE}
+options(scipen=999) 
+model <- lm(JWMNP ~ JWTR_label + MIL_label + PINCP + AGEP, 
+            data = military_data)
+
+summary(model)
+```
+
+## Takeaways
+
+The multiple R Squared value for my model is 0.1277, meaning that this model can predict about 13% of the variation in commute times for the workers in my data set. Given that this model includes variables that can have a great effect on commute times based on my previous analyses, principally mode of transportation, I think I expected this value to be a little higher.
+
+The average increase in commute times for modes other than walking was somewhat astounding, reaffirming that walking commuters tend to live much closer to work. Although those who commuted by motorcycle, taxicab, and bicycle respectively spent approximately 6, 15, or 16 more minutes commuting on average than walking commuters, commuters by other modes spent anywhere from an average of 20 more minutes (by automobile) to 40 more minutes (by subway) to 91 more minutes (by trolley) commuting to work than walkers.
+
+Almost all of the coefficients for non-walking commute modes were statistically significant at a 95-percent confidence interval. The only one that was not was bicycling, which had a p-value of ~0.012 and is typically lumped in with walking as an "active commute mode." The p-value for Taxicab was almost exactly 0.05, indicating at least some statistical significance, while the next lowest significance was motorcycle, with a p-value of ~0.002. All other modes had minuscule p-values, indicating a very high statistical significance.
+
+Moving on to my other categorical variable: military service status. On average, reservists and retirees had commutes that were about 5.43 minutes and 4.95 minutes longer than those on active duty, respectively. Both had very small p-values indicating a high statistical significance.
+
+And lastly, my two other continuous variables: age and income. Based on the p-values, income had a very high statistical significance when measured against commute times, while age did not.
