@@ -1,0 +1,128 @@
+---
+title: "Assignment_5_Quant"
+author: "Alex Cox"
+date: "10/4/2020"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library, include=FALSE}
+library(tidyverse)
+library(jtools)
+library(interactions)
+library(knitr)
+```
+
+```{r load CSV, message=FALSE}
+military_data <- read_csv("militarycommute.csv")
+```
+
+## Overview
+
+For this assignment, I will first recreate my linear regression predicting average travel time to work (JWMNP) based on the mode of commute (JWTR_label), military service status (MIL_Label), income (PINCP), and age (AGEP) based on 2018 ACS responses in the state of Virginia.
+
+```{r model1, message=FALSE}
+options(scipen=999) 
+model1 <- lm(JWMNP ~ JWTR_label + MIL_label + PINCP + AGEP, 
+            data = military_data)
+
+summary(model1)
+```
+
+## Log Transforming Income
+
+I first tried log transforming income to see if it would greatly impact my multiple R-squared value from the regression analysis above. It only increased the multiple R-squared value from 0.1277 to 0.1403, but it did slightly change the statistical significance of some of the other variables in comparison. However, I decided it would be useful to keep this log transform for my other analyses.
+
+```{r model2, message=FALSE}
+model2 <- lm(JWMNP ~ JWTR_label + MIL_label + log(PINCP) + AGEP, 
+            data = military_data)
+
+summary(model2)
+```
+
+## Mutating Data to Aggregate Commuting Modes
+
+In order to analyze broader trends across different types of commuting methods, I decided to mutate my JWTR (mode of transportation to work) in order to aggregate them into broader categories of "Active Modes," "Motor Vehicles," "Public Transit," and "Other." I noticed similar results among these groups while examining my data in previous weeks, so I thought it would be useful to examine them as 4 broader categories rather than 11 distinct variables.
+
+When comparing other mode types against the Active Mode type in this analysis, we see that all of the other variables have statistical significance except for Age. We also see how much longer commutes by other modes tend to be compared to active modes, which makes sense if we assume that these commutes are undertaken by individuals who live closer to work on average.
+
+```{r model3, message=FALSE}
+military_data <- military_data %>%
+  mutate(JWTR_groups = case_when(
+    JWTR_label=="Walked" ~ "Active_Mode",
+    JWTR_label=="Car, truck, or van" ~ "Motor_Vehicle",
+    JWTR_label=="Bus or trolley bus" ~ "Public_Transit",
+    JWTR_label=="Streetcar or trolley car (carro publico in Puerto Rico)" ~ "Public_Transit",
+    JWTR_label=="Bicycle" ~ "Active_Mode",
+    JWTR_label=="Subway or elevated" ~ "Public_Transit",
+    JWTR_label=="Railroad" ~ "Public_Transit",
+    JWTR_label=="Ferryboat" ~ "Public_Transit",
+    JWTR_label=="Taxicab" ~ "Motor_Vehicle",
+    JWTR_label=="Motorcycle" ~ "Motor_Vehicle",
+    JWTR_label=="Other method" ~ "Other"))
+
+model3 <- lm(JWMNP ~ JWTR_groups + MIL_label + log(PINCP) + AGEP, 
+            data = military_data)
+
+summary(model3)
+```
+
+## Adding an Interaction Term
+
+Given that military service status seems to be the most unique variable that I'm examining in my analysis, I wanted to play around with "MIL_label" as my interaction term. Thus, I coded a regression to examine whether or not income and mode of transportation to work make a bigger difference for active duty military members than for reservists and retirees.
+
+Overall, these results seem a little scattered. Overall, active duty military members seem to have shorter commutes than those in other groups. The multiple r-squared value for this model is 0.1359, let's see how that compares to the numbers for the previous 3 models.
+
+```{r model4, message=FALSE}
+model4 <- lm(JWMNP ~ JWTR_groups + MIL_label + log(PINCP) +
+               AGEP + JWTR_groups:MIL_label + log(PINCP):MIL_label, 
+            data = military_data)
+
+summary(model4)
+```
+
+## Which Model Version is Best?
+
+When I graph the adjusted R-squared values for the 4 models above, it appears that Model 2 (in which I log-transformed income) is the clear winner with an adjusted R-squared value of 0.1379.
+
+```{r visual1, message=FALSE}
+ModelFit <- tibble(model = c(1, 2, 3, 4),
+                   R_square = c(summary(model1)$adj.r.squared,
+                                summary(model2)$adj.r.squared,
+                                summary(model3)$adj.r.squared,
+                                summary(model4)$adj.r.squared))
+
+ggplot(ModelFit, aes(x = model, y = R_square)) +
+  geom_line() +
+  scale_x_continuous(name = "",
+                   breaks = breaks <- seq(1, 4, by = 1),
+                   labels = paste("Model", breaks)) +
+  scale_y_continuous(name = "Adjusted R-squared value") +
+  theme_bw()
+```
+
+By modelling the predicted relationship between income and commute time based on military service status, we can see how active duty military members tend to have lower commute times on average.
+
+```{r visual2, message=FALSE}
+interact_plot(model2, pred = PINCP, modx = MIL_label, interval = TRUE) +
+  scale_x_continuous(name = "Annual income (thousands)",
+                     limits = c(0, 500000),
+                     breaks = breaks <- seq(0, 500000, by = 50000),
+                     labels = paste("$", 
+                                    prettyNum(breaks/1000, big.mark = "'"),
+                                    sep = "")) +
+  scale_y_continuous(name = "Travel time to work (minutes)",
+                     breaks = seq(0, 60, by = 5)) +
+  scale_color_discrete(name = "") +
+  scale_linetype_discrete(name = "") +
+  scale_fill_discrete(name = "") +
+  theme(legend.position = "bottom")
+```
